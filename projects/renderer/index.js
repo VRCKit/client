@@ -134,6 +134,26 @@ function extractArchive(sourcePath, destinationPath, progressCallback) {
   });
 }
 
+async function downloadFile(url, outputPath, progressCallback) {
+  const dir = path.dirname(outputPath);
+  if (!fs.existsSync(dir)) await fs.promises.mkdir(dir, { recursive: true });
+
+  const response = await axios({
+    method: 'get',
+    url: url,
+    responseType: 'stream',
+    onDownloadProgress: progressCallback
+  }).catch(err => {
+    console.error("Failed to download extractor:", err);
+  });
+  response.data.pipe(fs.createWriteStream(outputPath));
+  await new Promise((resolve, reject) => {
+    response.data.once('end', resolve);
+    response.data.once('error', reject);
+  });
+  await new Promise(r => setTimeout(r, 20));
+}
+
 async function checkForUpdates() {
   const appPath = app.getPath("userData");
   const updaterWindow = new BrowserWindow({
@@ -171,109 +191,63 @@ async function checkForUpdates() {
     const sevenDll = "https://github.com/TheArmagan/vrckit-assets/releases/download/7z-v25.01/7z.dll";
     updateStatus("Downloading extractor...");
     updateProgress(0);
-    const response = await axios({
-      method: 'get',
-      url: sevenDll,
-      responseType: 'stream',
-      onDownloadProgress: (progressEvent) => {
-        const total = progressEvent.total || 1; // Avoid division by zero
-        const progress = Math.round((progressEvent.loaded / total) * 50);
-        updateProgress(progress);
-        updateStatus(`Downloading extractor... (${((progressEvent.rate / 1024 / 1024) || 0).toFixed(2)} MB/sec)`);
-      }
-    }).catch(err => {
-      console.error("Failed to download extractor:", err);
+
+    await downloadFile(sevenDll, sevenDllPath, (progressEvent) => {
+      const total = progressEvent.total || 1; // Avoid division by zero
+      const progress = Math.round((progressEvent.loaded / total) * 50);
+      updateProgress(progress);
+      updateStatus(`Downloading extractor... (${((progressEvent.rate / 1024 / 1024) || 0).toFixed(2)} MB/sec)`);
     });
-    response.data.pipe(fs.createWriteStream(sevenDllPath));
-    await new Promise((resolve, reject) => {
-      response.data.once('end', resolve);
-      response.data.once('error', reject);
-    });
+
     const sevenExe = "https://github.com/TheArmagan/vrckit-assets/releases/download/7z-v25.01/7z.exe";
     updateStatus("Downloading extractor...");
     updateProgress(0);
-    const response2 = await axios({
-      method: 'get',
-      url: sevenExe,
-      responseType: 'stream',
-      onDownloadProgress: (progressEvent) => {
-        const total = progressEvent.total || 1; // Avoid division by zero
-        const progress = Math.round((progressEvent.loaded / total) * 50) + 50;
-        updateProgress(progress);
-        updateStatus(`Downloading extractor... (${((progressEvent.rate / 1024 / 1024) || 0).toFixed(2)} MB/sec)`);
-      }
-    }).catch(err => {
-      console.error("Failed to download extractor:", err);
+
+    await downloadFile(sevenExe, sevenExePath, (progressEvent) => {
+      const total = progressEvent.total || 1; // Avoid division by zero
+      const progress = Math.round((progressEvent.loaded / total) * 50) + 50;
+      updateProgress(progress);
+      updateStatus(`Downloading extractor... (${((progressEvent.rate / 1024 / 1024) || 0).toFixed(2)} MB/sec)`);
     });
-    response2.data.pipe(fs.createWriteStream(sevenExePath));
-    await new Promise((resolve, reject) => {
-      response2.data.once('end', resolve);
-      response2.data.once('error', reject);
-    });
+
     updateStatus("Extractor downloaded successfully.");
     updateProgress(100);
   }
 
   updateStatus("Checking for native updates...");
   updateProgress(5);
-  const releasesJson = await axios({
+
+  const latestRendererMetaRes = await axios({
     method: "GET",
-    url: "https://api.github.com/repos/thearmagan/vrckit-releases/releases/latest",
-    headers: {
-      "User-Agent": `VRCKit/${app.getVersion()} https://vrckit.com/`,
-      "Accept": "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28",
-    },
+    url: "https://raw.githubusercontent.com/VRCKit/client/refs/heads/main/build-meta/latest/renderer.json",
   });
 
-  if (!releasesJson || !releasesJson.data || !releasesJson.data.assets) {
-    updateStatus("Failed to fetch release information.");
-    updateProgress(100);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    process.exit(1);
-  }
-
   const currentVersion = app.getVersion();
-  const latestVersion = releasesJson.data.tag_name.replace("v", "");
+  const latestVersion = latestRendererMetaRes.data.version;
 
   if (semver.lt(currentVersion, latestVersion)) {
     updateStatus(`Downloading native update... (v${latestVersion})`);
 
-    const asset = releasesJson.data.assets.find((asset) => asset.name.endsWith(".exe"));
-
-    if (!asset) {
-      updateStatus("No compatible update found.");
-      updateProgress(100);
-      return () => updaterWindow.destroy();
-    }
-
+    const assetUrl = `https://github.com/VRCKit/client/releases/download/${latestRendererMetaRes.data.tag}/${latestRendererMetaRes.data.filename.replaceAll(" ", ".")}`;
     const tempFilePath = path.join(process.env.TEMP, `VRCKit-Latest.exe`);
-    const response = await axios({
-      method: 'GET',
-      url: asset.browser_download_url,
-      responseType: 'stream',
-      onDownloadProgress: (progressEvent) => {
-        const total = progressEvent.total || 1; // Avoid division by zero
-        const progress = Math.round((progressEvent.loaded / total) * 95); // 95% for download progress
-        updateStatus(`Downloading update... (${((progressEvent.rate / 1024 / 1024) || 0).toFixed(2)} MB/sec)`);
-        updateProgress(progress + 5); // Add 5% for the download progress
-      }
-    }).catch(err => {
-      console.error("Failed to download update:", err);
-    });
 
-    if (!response || response.status !== 200) {
+    try {
+      await downloadFile(
+        assetUrl,
+        tempFilePath,
+        (progressEvent) => {
+          const total = progressEvent.total || 1; // Avoid division by zero
+          const progress = Math.round((progressEvent.loaded / total) * 95); // 95% for download progress
+          updateStatus(`Downloading update... (${((progressEvent.rate / 1024 / 1024) || 0).toFixed(2)} MB/sec)`);
+          updateProgress(progress + 5); // Add 5% for the download progress
+        }
+      );
+    } catch (error) {
+      console.error("Failed to download update:", error);
       updateStatus("Failed to download update.");
       updateProgress(100);
       return () => updaterWindow.destroy();
     }
-
-    response.data.pipe(fs.createWriteStream(tempFilePath));
-
-    await new Promise((resolve, reject) => {
-      response.data.once('end', resolve);
-      response.data.once('error', reject);
-    });
 
     updateStatus("Waiting for updater...");
     await new Promise(r => setTimeout(r, 500));
@@ -291,14 +265,13 @@ async function checkForUpdates() {
   }
 
   updateStatus("Checking for web updates...");
-  updateProgress(5);
+  updateProgress(10);
 
   const currentMd5Path = fs.existsSync(path.join(appPath, 'build/build.md5.txt'));
   const currentMd5 = currentMd5Path ? await fs.promises.readFile(path.join(appPath, 'build/build.md5.txt'), 'utf8') : "0";
 
-  const remoteMD5 = await axios.get('https://api.vrckit.com/files/builds/v1/latest/build.md5.txt')
-    .then(res => res.data.trim())
-    .catch(err => "0");
+  const latestFrontendMetaRes = await axios.get('https://raw.githubusercontent.com/VRCKit/client/refs/heads/main/build-meta/latest/frontend.json');
+  const remoteMD5 = latestFrontendMetaRes.data.md5;
 
   if (currentMd5 === remoteMD5) {
     updateStatus("No updates available.");
@@ -306,37 +279,27 @@ async function checkForUpdates() {
     return () => updaterWindow.destroy();
   }
 
-  const remoteZipUrl = 'https://api.vrckit.com/files/builds/v1/latest/build.zip';
-  updateStatus("Downloading update...");
+  const remoteZipUrl = `https://github.com/VRCKit/client/releases/download/${latestFrontendMetaRes.data.tag}/build.zip`;
+  const tempZipPath = path.join(appPath, 'temp_build.zip');
+  updateStatus(`Downloading update... (v${latestFrontendMetaRes.data.version})`);
 
-  const response = await axios({
-    method: 'get',
-    url: remoteZipUrl,
-    responseType: 'stream',
-    onDownloadProgress: (progressEvent) => {
-      const total = progressEvent.total || 1; // Avoid division by zero
-      const progress = Math.round((progressEvent.loaded / total) * 45); // 45% for download progress
-      updateStatus(`Downloading update... (${((progressEvent.rate / 1024 / 1024) || 0).toFixed(2)} MB/sec)`);
-      updateProgress(progress + 5); // Add 5% for the download progress
-    }
-  }).catch(err => {
-    console.error("Failed to download update:", err);
-  });
-
-  if (!response || response.status !== 200) {
+  try {
+    await downloadFile(
+      remoteZipUrl,
+      tempZipPath,
+      (progressEvent) => {
+        const total = progressEvent.total || 1; // Avoid division by zero
+        const progress = Math.round((progressEvent.loaded / total) * 40); // 40% for download progress
+        updateStatus(`Downloading update... (${((progressEvent.rate / 1024 / 1024) || 0).toFixed(2)} MB/sec)`);
+        updateProgress(progress + 10); // Add 10% for the download progress
+      }
+    );
+  } catch (error) {
+    console.error("Failed to download update:", error);
     updateStatus("Failed to download update.");
     updateProgress(100);
     return () => updaterWindow.destroy();
   }
-
-  const tempZipPath = path.join(appPath, 'temp_build.zip');
-
-  response.data.pipe(fs.createWriteStream(tempZipPath));
-
-  await new Promise((resolve, reject) => {
-    response.data.once('end', resolve);
-    response.data.once('error', reject);
-  });
 
   updateStatus("Extracting update...");
 
@@ -505,6 +468,18 @@ async function createWindow() {
           headers: error.response?.headers,
           url: error.response?.request?.res?.responseUrl
         };
+      }
+    }
+  );
+
+  ipcMain.handle(
+    "DownloadFile",
+    async (event, { url, path }) => {
+      try {
+        await downloadFile(url, path);
+        return { success: true };
+      } catch (error) {
+        return { error: error.message };
       }
     }
   );
