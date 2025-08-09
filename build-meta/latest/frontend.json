@@ -1,7 +1,7 @@
 {
-  "tag": "frontend-build-20250809_103855",
-  "version": "0.3.4-dev.0",
-  "md5": "78fc3871a068c53db8d2d27ac24fa713",
-  "buildDate": "20250809_103855",
-  "commit": "831a2cc74064116081488913469a1bdf9cddcaf1"
+  "tag": "frontend-build-20250809_145410",
+  "version": "0.3.5-dev.0",
+  "md5": "30f06ee4c4993cc9430bfa35ffa8aed7",
+  "buildDate": "20250809_145410",
+  "commit": "6622526b033252508e1ef9206b2055c6d5955091"
 }
