@@ -1,1 +1,1 @@
-git pull && pnpm i && pnpm run distbuild
+git pull && npm install && npm run distbuild
