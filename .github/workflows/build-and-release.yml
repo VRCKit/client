@@ -22,15 +22,10 @@ jobs:
       with:
         node-version: '20'
         
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v4
-      with:
-        version: 8
-        
     - name: Install dependencies
       run: |
         cd projects/frontend
-        pnpm install
+        npm install
         
     - name: Run build script
       run: |
