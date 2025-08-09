@@ -32,8 +32,7 @@ jobs:
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       id: package_version
       run: |
-        cd projects/renderer
-        $VERSION = node -p "require('./package.json').version"
+        $VERSION = node -p "require('./projects/renderer/package.json').version"
         echo "version=$VERSION" >> $env:GITHUB_OUTPUT
         
     - name: Check if version changed
@@ -68,9 +67,6 @@ jobs:
       run: |
         cd projects/renderer
         yarn install
-          echo "version_changed=true" >> $env:GITHUB_OUTPUT
-          echo "No existing meta file found, creating new one"
-        }
         
     - name: Build Electron app
       if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.version_check.outputs.version_changed == 'true'
