@@ -75,18 +75,6 @@ async function main() {
 
   console.log(`MD5 checksum: ${md5}`);
 
-  if (!fs.existsSync(path.join(process.cwd(), '../backend/files/builds/v1/latest'))) {
-    await fs.promises.mkdir(path.join(process.cwd(), '../backend/files/builds/v1/latest'), { recursive: true });
-    console.log('Created directory for latest build files.');
-  }
-
-  console.log("Copying files to backend files directory...");
-  console.time('Copying files to backend files directory...');
-  await fs.promises.cp('./out/build.zip', path.join(process.cwd(), '../backend/files/builds/v1/latest/build.zip'), { force: true });
-  await fs.promises.cp('./out/build.md5.txt', path.join(process.cwd(), '../backend/files/builds/v1/latest/build.md5.txt'), { force: true });
-  console.timeEnd('Copying files to backend files directory...');
-  console.log("Files copied successfully.");
-
   console.log('Build process completed successfully.');
   console.timeEnd('Total build time');
 }
