@@ -60,7 +60,7 @@
 		"vite": "^6.0.0"
 	},
 	"dependencies": {
-		"@pulsoid/socket": "^1.1.6",
+		"@pulsoid/socket": "1.1.6",
 		"@sveltejs/adapter-static": "^3.0.8",
 		"axios": "^1.8.2",
 		"date-fns": "^4.1.0",
