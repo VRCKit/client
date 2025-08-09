@@ -2,6 +2,8 @@
 
 > **Advanced toolkit that completely transforms avatar discovery and management in VRChat**
 
+🌐 **Official Website**: [https://vrckit.com](https://vrckit.com)
+
 VRCKit is a comprehensive desktop application designed to take your VRChat experience to the next level with avatar discovery, management, and customization features. This project includes both a frontend web interface and an Electron-based desktop application.
 
 ## ✨ Key Features
