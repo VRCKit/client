@@ -28,10 +28,13 @@ jobs:
       with:
         node-version: '20'
         
+    - name: Setup Yarn
+      run: npm install -g yarn
+        
     - name: Install dependencies
       run: |
         cd projects/renderer
-        npm install
+        yarn install
         
     - name: Get package version
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -68,7 +71,7 @@ jobs:
       if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.version_check.outputs.version_changed == 'true'
       run: |
         cd projects/renderer
-        npm run build
+        yarn build
         
     - name: Get current date
       if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.version_check.outputs.version_changed == 'true'

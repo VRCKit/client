@@ -1,1 +1,1 @@
-git pull && npm install && npm run build && PORT=8041 node build/index.js
+git pull && yarn install && yarn build && PORT=8041 node build/index.js

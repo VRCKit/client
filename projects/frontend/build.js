@@ -38,7 +38,7 @@ async function main() {
 
   console.log('Building SvelteKit project...');
   console.time('Building SvelteKit project...');
-  await execAsync('npm run build');
+  await execAsync('yarn build');
   console.timeEnd('Building SvelteKit project...');
 
   console.log('Removing map files...');

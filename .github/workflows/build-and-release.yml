@@ -22,10 +22,13 @@ jobs:
       with:
         node-version: '20'
         
+    - name: Setup Yarn
+      run: npm install -g yarn
+        
     - name: Install dependencies
       run: |
         cd projects/frontend
-        npm install
+        yarn install
         
     - name: Run build script
       run: |

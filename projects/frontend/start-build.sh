@@ -1,1 +1,1 @@
-git pull && npm install && npm run distbuild
+git pull && yarn install && yarn distbuild
