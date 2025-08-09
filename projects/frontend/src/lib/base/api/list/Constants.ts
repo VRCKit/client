@@ -6,7 +6,7 @@ export class Constants {
   VRChatApiBaseUrl = "https://vrchat.com/api/1";
   VRChatPipelineUrl = "wss://pipeline.vrchat.cloud"
   ChatboxUpdateDelay = 2250;
-  WebVersion = "0.3.4-dev.0";
+  WebVersion = "0.3.5-dev.0";
   LatestLegalDate = "08.08.2025";
   constructor(public api: VRCKitAPI) { }
 }
