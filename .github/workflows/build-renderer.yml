@@ -160,6 +160,7 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
+        git pull origin main
         git add build-meta/latest/renderer.json
         git commit -m "Update renderer build meta: v${{ steps.package_version.outputs.version }} (renderer-build-${{ steps.date.outputs.date }})"
         git push
