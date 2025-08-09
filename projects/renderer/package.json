@@ -1,0 +1,66 @@
+{
+  "name": "vrckit",
+  "private": true,
+  "version": "0.3.4",
+  "description": "VRCKit",
+  "displayName": "VRCKit",
+  "main": "index.js",
+  "scripts": {
+    "dev": "electron .",
+    "build": "electron-builder build --win --publish never"
+  },
+  "keywords": [],
+  "author": {
+    "name": "Kıraç Armağan Önal",
+    "email": "kiracarmaganonal@gmail.com"
+  },
+  "license": "GPL-3.0-only",
+  "build": {
+    "appId": "rest.armagan.vrckit",
+    "copyright": "Copyright © 2024-2025 VRCKit",
+    "productName": "VRCKit",
+    "icon": "icon.png",
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "installerIcon": "icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "files": [
+      "icon.png",
+      "icon.ico",
+      "index.js",
+      "package.json",
+      "updater.html"
+    ]
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "chalk": "^5.3.0",
+    "chokidar": "^4.0.1",
+    "electron-is-dev": "^2.0.0",
+    "http-proxy-agent": "^7.0.2",
+    "https-proxy-agent": "^7.0.6",
+    "json-stream": "^1.0.0",
+    "line-reader": "^0.4.0",
+    "mime-types": "^3.0.1",
+    "original-fs": "^1.2.0",
+    "osc": "^2.4.5",
+    "puppeteer-core": "^24.15.0",
+    "semver": "^7.7.2"
+  },
+  "devDependencies": {
+    "@types/line-reader": "^0.0.37",
+    "@types/node": "^22.9.0",
+    "@types/ws": "^8.5.13",
+    "electron": "^34.0.2",
+    "electron-builder": "^26.0.12"
+  }
+}

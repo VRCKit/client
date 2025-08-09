@@ -1,0 +1,129 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 8
+        
+    - name: Install dependencies
+      run: |
+        cd projects/frontend
+        pnpm install
+        
+    - name: Run build script
+      run: |
+        cd projects/frontend
+        node build.js
+        
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: |
+          projects/frontend/out/build.zip
+          projects/frontend/out/build.md5.txt
+        retention-days: 90
+        
+    - name: Get current date
+      id: date
+      run: echo "date=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_OUTPUT
+      
+    - name: Create Release
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: frontend-build-${{ steps.date.outputs.date }}
+        name: Frontend Build Release ${{ steps.date.outputs.date }}
+        body: |
+          Automated build from commit ${{ github.sha }}
+          
+          **Build Info:**
+          - Commit: ${{ github.sha }}
+          - Branch: ${{ github.ref_name }}
+          - Date: ${{ steps.date.outputs.date }}
+          
+          **Files:**
+          - `build.zip`: Compressed build directory
+          - `build.md5.txt`: MD5 checksum for verification
+        files: |
+          projects/frontend/out/build.zip
+          projects/frontend/out/build.md5.txt
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Get package version
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      id: package_version
+      run: |
+        VERSION=$(node -p "require('./projects/frontend/package.json').version")
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        
+    - name: Check if version changed
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      id: version_check
+      run: |
+        if [ -f "build-meta/latest/frontend.json" ]; then
+          CURRENT_VERSION=$(node -p "JSON.parse(require('fs').readFileSync('build-meta/latest/frontend.json', 'utf8')).version" 2>/dev/null || echo "")
+          if [ "$CURRENT_VERSION" = "${{ steps.package_version.outputs.version }}" ]; then
+            echo "version_changed=false" >> $GITHUB_OUTPUT
+            echo "Version ${{ steps.package_version.outputs.version }} already exists, skipping meta update"
+          else
+            echo "version_changed=true" >> $GITHUB_OUTPUT
+            echo "Version changed from '$CURRENT_VERSION' to '${{ steps.package_version.outputs.version }}'"
+          fi
+        else
+          echo "version_changed=true" >> $GITHUB_OUTPUT
+          echo "No existing meta file found, creating new one"
+        fi
+        
+    - name: Get build MD5
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.version_check.outputs.version_changed == 'true'
+      id: build_md5
+      run: |
+        MD5=$(cat projects/frontend/out/build.md5.txt)
+        echo "md5=$MD5" >> $GITHUB_OUTPUT
+        
+    - name: Update build meta JSON
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.version_check.outputs.version_changed == 'true'
+      run: |
+        mkdir -p build-meta/latest
+        cat > build-meta/latest/frontend.json << EOF
+        {
+          "tag": "frontend-build-${{ steps.date.outputs.date }}",
+          "version": "${{ steps.package_version.outputs.version }}",
+          "md5": "${{ steps.build_md5.outputs.md5 }}",
+          "buildDate": "${{ steps.date.outputs.date }}",
+          "commit": "${{ github.sha }}"
+        }
+        EOF
+        
+    - name: Commit and push meta file
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.version_check.outputs.version_changed == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add build-meta/latest/frontend.json
+        git commit -m "Update frontend build meta: ${{ steps.package_version.outputs.version }} (frontend-build-${{ steps.date.outputs.date }})"
+        git push

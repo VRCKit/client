@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VRCKit - Updater</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Inter", sans-serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+      width: 100%;
+    }
+
+    #app {
+      -webkit-app-region: drag;
+      width: 300px;
+      height: 400px;
+      background-color: #09090b;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+    }
+
+    .icon {
+      width: 150px;
+      height: 150px;
+      animation: iconDropshadowBreath 1.5s infinite ease-in-out alternate;
+    }
+
+    .title {
+      display: flex;
+      flex-direction: column;
+      max-width: 75%;
+
+      h1 {
+        color: #fafafa;
+        font-size: 1.5rem;
+        font-weight: 600;
+        text-align: center;
+        letter-spacing: 0.05em;
+      }
+
+      h2 {
+        color: #b0b0b0;
+        font-size: 1rem;
+        font-weight: 400;
+        text-align: center;
+        letter-spacing: 0.025em;
+      }
+    }
+
+    .progress-bar {
+      width: 75%;
+      height: 12px;
+      background-color: #1a1a1d;
+      border-radius: 9999px;
+      overflow: hidden;
+
+      .bar {
+        width: 0;
+        height: 100%;
+        background-color: #42424a;
+        border-radius: 9999px;
+        transition: width 0.25s ease-in-out;
+      }
+    }
+
+    @keyframes iconDropshadowBreath {
+      0% {
+        filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.1));
+      }
+
+      100% {
+        filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.25));
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <img src="./icon.png" draggable="false" class="icon" />
+    <div class="title">
+      <h1>VRCKit</h1>
+      <h2 class="status-text">Updating..</h2>
+    </div>
+    <div class="progress-bar">
+      <div class="bar"></div>
+    </div>
+  </div>
+  <script>
+    window.API = {
+      updateStatus: (status) => {
+        const statusText = document.querySelector('.status-text');
+        if (statusText) statusText.textContent = status;
+      },
+      updateProgress: (progress) => {
+        const bar = document.querySelector('.bar');
+        if (bar) {
+          bar.style.width = `${progress}%`;
+        }
+      }
+    }
+  </script>
+</body>
+
+</html>

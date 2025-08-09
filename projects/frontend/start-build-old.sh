@@ -1,0 +1,1 @@
+git pull && pnpm i && pnpm run build && PORT=8041 node build/index.js
