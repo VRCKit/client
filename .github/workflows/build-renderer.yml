@@ -28,14 +28,6 @@ jobs:
       with:
         node-version: '20'
         
-    - name: Setup Yarn
-      run: npm install -g yarn
-        
-    - name: Install dependencies
-      run: |
-        cd projects/renderer
-        yarn install
-        
     - name: Get package version
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       id: package_version
@@ -63,6 +55,19 @@ jobs:
             echo "Could not read existing version, creating new build"
           }
         } else {
+          echo "version_changed=true" >> $env:GITHUB_OUTPUT
+          echo "No existing meta file found, creating new one"
+        }
+        
+    - name: Setup Yarn
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.version_check.outputs.version_changed == 'true'
+      run: npm install -g yarn
+        
+    - name: Install dependencies
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.version_check.outputs.version_changed == 'true'
+      run: |
+        cd projects/renderer
+        yarn install
           echo "version_changed=true" >> $env:GITHUB_OUTPUT
           echo "No existing meta file found, creating new one"
         }
