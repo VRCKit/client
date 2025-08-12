@@ -1,9 +1,9 @@
 {
-  "filename": "VRCKit Setup 0.3.5.exe",
+  "buildDate": "20250812_163621",
+  "version": "0.3.6",
   "platform": "windows",
-  "version": "0.3.5",
-  "buildDate": "20250809_144707",
-  "tag": "renderer-build-20250809_144707",
-  "commit": "8b344de54430a7b8321ca51815038232f7a0d43d",
-  "md5": "1b053e4bd805473c7f38cafef389cc99"
+  "filename": "VRCKit-0.3.6 Setup.exe",
+  "commit": "aa34634ada2f76d41e8655f04604ee4765c9256d",
+  "md5": "e95e6a193ba8a80d9bf17f1f5a1ee25e",
+  "tag": "renderer-build-20250812_163621"
 }
