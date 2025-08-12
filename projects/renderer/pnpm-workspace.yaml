@@ -1,6 +1,0 @@
-onlyBuiltDependencies:
-  - '@serialport/bindings-cpp'
-  - electron
-  - electron-winstaller
-  - puppeteer
-  - sqlite3

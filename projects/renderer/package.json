@@ -1,13 +1,16 @@
 {
   "name": "vrckit",
   "private": true,
-  "version": "0.3.5",
+  "version": "0.3.5.1",
   "description": "VRCKit",
   "displayName": "VRCKit",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
-    "dev": "electron .",
-    "build": "electron-builder build --win --publish never"
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "analyze": "npm ls --depth=0 --long",
+    "clean": "rimraf out node_modules/.cache"
   },
   "keywords": [],
   "author": {
@@ -15,37 +18,70 @@
     "email": "kiracarmaganonal@gmail.com"
   },
   "license": "GPL-3.0-only",
-  "build": {
-    "appId": "rest.armagan.vrckit",
-    "copyright": "Copyright © 2024-2025 VRCKit",
-    "productName": "VRCKit",
-    "icon": "icon.png",
-    "win": {
-      "target": [
-        "nsis"
-      ]
-    },
-    "nsis": {
-      "oneClick": true,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": false,
-      "installerIcon": "icon.ico",
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
-    },
-    "files": [
-      "icon.png",
-      "icon.ico",
-      "index.js",
-      "package.json",
-      "updater.html"
-    ]
+  "homepage": "https://github.com/VRCKit/client",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/VRCKit/client.git"
+  },
+  "config": {
+    "forge": {
+      "packagerConfig": {
+        "icon": "src/icon",
+        "name": "VRCKit",
+        "executableName": "VRCKit",
+        "asar": true,
+        "prune": true,
+        "ignore": [
+          "/\\.git($|/)",
+          "/node_modules/\\.cache($|/)",
+          "/\\.vscode($|/)",
+          "/\\.github($|/)",
+          "/\\.gitignore$",
+          "/README\\.md$",
+          "/\\.eslintrc.*$",
+          "/\\.prettierrc.*$",
+          "/tsconfig\\.json$",
+          "/src/.*\\.ts$",
+          "/\\.env.*$",
+          "/docs($|/)",
+          "/test($|/)",
+          "/tests($|/)",
+          "/\\.nyc_output($|/)",
+          "/coverage($|/)",
+          "/\\*\\.log$",
+          "/\\.DS_Store$",
+          "/Thumbs\\.db$"
+        ],
+        "win32metadata": {
+          "CompanyName": "VRCKit",
+          "FileDescription": "VRCKit",
+          "ProductName": "VRCKit"
+        }
+      },
+      "rebuildConfig": {},
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "vrckit",
+            "authors": "Kıraç Armağan Önal",
+            "description": "VRCKit: Your Ultimate AI VRChat Avatar Explorer, Discovery Platform & Customization Hub",
+            "setupIcon": "assets/icon.ico",
+            "loadingGif": "assets/loading.png",
+            "noMsi": true
+          }
+        }
+      ],
+      "publishers": [],
+      "plugins": []
+    }
   },
   "dependencies": {
     "axios": "^1.7.7",
     "chalk": "^5.3.0",
     "chokidar": "^4.0.1",
     "electron-is-dev": "^2.0.0",
+    "electron-squirrel-startup": "^1.0.1",
     "http-proxy-agent": "^7.0.2",
     "https-proxy-agent": "^7.0.6",
     "json-stream": "^1.0.0",
@@ -57,10 +93,12 @@
     "semver": "^7.7.2"
   },
   "devDependencies": {
+    "@electron-forge/cli": "^7.4.0",
+    "@electron-forge/maker-squirrel": "^7.4.0",
+    "@electron/packager": "^18.4.0",
     "@types/line-reader": "^0.0.37",
     "@types/node": "^22.9.0",
     "@types/ws": "^8.5.13",
-    "electron": "^34.0.2",
-    "electron-builder": "^26.0.12"
+    "electron": "^34.0.2"
   }
 }

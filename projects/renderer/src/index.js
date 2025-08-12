@@ -1,4 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog, Tray, Menu, session } = require('electron');
+
+if (require('electron-squirrel-startup')) app.quit();
+
 const path = require('path');
 const axios = require("axios");
 const isDev = require('electron-is-dev');

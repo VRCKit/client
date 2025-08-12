@@ -58,21 +58,22 @@ jobs:
           echo "No existing meta file found, creating new one"
         }
         
-    - name: Setup Yarn
+    - name: Setup NPM
       if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.version_check.outputs.version_changed == 'true'
-      run: npm install -g yarn
+      run: |
+        # NPM kullanarak devam edeceğiz, Yarn yerine
         
     - name: Install dependencies
       if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.version_check.outputs.version_changed == 'true'
       run: |
         cd projects/renderer
-        yarn install
+        npm install
         
-    - name: Build Electron app
+    - name: Build Electron app with Forge
       if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.version_check.outputs.version_changed == 'true'
       run: |
         cd projects/renderer
-        yarn build
+        npm run make
         
     - name: Get current date
       if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.version_check.outputs.version_changed == 'true'
@@ -86,15 +87,27 @@ jobs:
       id: build_hash
       run: |
         cd projects/renderer
-        $SETUP_FILE = Get-ChildItem -Path "dist" -Filter "*.exe" | Select-Object -First 1
+        # Electron Forge çıktı dizini "out" klasörü altında
+        $SETUP_FILE = Get-ChildItem -Path "out/make/squirrel.windows/x64" -Filter "*.exe" | Where-Object { $_.Name -like "*Setup.exe" } | Select-Object -First 1
         if ($SETUP_FILE) {
           $HASH = Get-FileHash -Path $SETUP_FILE.FullName -Algorithm MD5
           echo "md5=$($HASH.Hash.ToLower())" >> $env:GITHUB_OUTPUT
           echo "filename=$($SETUP_FILE.Name)" >> $env:GITHUB_OUTPUT
           echo "filepath=$($SETUP_FILE.FullName)" >> $env:GITHUB_OUTPUT
         } else {
-          echo "No setup file found!"
-          exit 1
+          echo "No setup file found in out/make/squirrel.windows/x64!"
+          # Alternatif dizinleri kontrol et
+          $ALT_SETUP = Get-ChildItem -Path "out" -Filter "*.exe" -Recurse | Where-Object { $_.Name -like "*Setup*" -or $_.Name -like "*Installer*" } | Select-Object -First 1
+          if ($ALT_SETUP) {
+            $HASH = Get-FileHash -Path $ALT_SETUP.FullName -Algorithm MD5
+            echo "md5=$($HASH.Hash.ToLower())" >> $env:GITHUB_OUTPUT
+            echo "filename=$($ALT_SETUP.Name)" >> $env:GITHUB_OUTPUT
+            echo "filepath=$($ALT_SETUP.FullName)" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "No setup file found anywhere in out directory!"
+            Get-ChildItem -Path "out" -Recurse
+            exit 1
+          }
         }
         
     - name: Upload build artifacts
@@ -111,7 +124,7 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         tag_name: renderer-build-${{ steps.date.outputs.date }}
-        name: Renderer Build Release v${{ steps.package_version.outputs.version }}
+        name: renderer-build-${{ steps.date.outputs.date }}
         body: |
           Automated renderer build from commit ${{ github.sha }}
           
@@ -120,15 +133,16 @@ jobs:
           - Commit: ${{ github.sha }}
           - Branch: ${{ github.ref_name }}
           - Date: ${{ steps.date.outputs.date }}
-          - Platform: Windows
+          - Platform: Windows x64
+          - Built with: Electron Forge + Squirrel
           
           **Files:**
           - `${{ steps.build_hash.outputs.filename }}`: Windows installer executable
           
           **Installation:**
           1. Download the `.exe` file
-          2. Run as administrator if needed
-          3. Follow the installation wizard
+          2. Run the installer (no admin rights needed)
+          3. The app will auto-update on future releases
         files: |
           ${{ steps.build_hash.outputs.filepath }}
         draft: false
