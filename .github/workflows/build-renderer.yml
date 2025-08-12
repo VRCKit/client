@@ -91,18 +91,26 @@ jobs:
         $SETUP_FILE = Get-ChildItem -Path "out/make/squirrel.windows/x64" -Filter "*.exe" | Where-Object { $_.Name -like "*Setup.exe" } | Select-Object -First 1
         if ($SETUP_FILE) {
           $HASH = Get-FileHash -Path $SETUP_FILE.FullName -Algorithm MD5
+          $SIZE = (Get-Item $SETUP_FILE.FullName).Length
+          $SIZE_MB = [math]::Round($SIZE / 1MB, 2)
           echo "md5=$($HASH.Hash.ToLower())" >> $env:GITHUB_OUTPUT
           echo "filename=$($SETUP_FILE.Name)" >> $env:GITHUB_OUTPUT
           echo "filepath=$($SETUP_FILE.FullName)" >> $env:GITHUB_OUTPUT
+          echo "size=$SIZE" >> $env:GITHUB_OUTPUT
+          echo "size_mb=$SIZE_MB" >> $env:GITHUB_OUTPUT
         } else {
           echo "No setup file found in out/make/squirrel.windows/x64!"
           # Alternatif dizinleri kontrol et
           $ALT_SETUP = Get-ChildItem -Path "out" -Filter "*.exe" -Recurse | Where-Object { $_.Name -like "*Setup*" -or $_.Name -like "*Installer*" } | Select-Object -First 1
           if ($ALT_SETUP) {
             $HASH = Get-FileHash -Path $ALT_SETUP.FullName -Algorithm MD5
+            $SIZE = (Get-Item $ALT_SETUP.FullName).Length
+            $SIZE_MB = [math]::Round($SIZE / 1MB, 2)
             echo "md5=$($HASH.Hash.ToLower())" >> $env:GITHUB_OUTPUT
             echo "filename=$($ALT_SETUP.Name)" >> $env:GITHUB_OUTPUT
             echo "filepath=$($ALT_SETUP.FullName)" >> $env:GITHUB_OUTPUT
+            echo "size=$SIZE" >> $env:GITHUB_OUTPUT
+            echo "size_mb=$SIZE_MB" >> $env:GITHUB_OUTPUT
           } else {
             echo "No setup file found anywhere in out directory!"
             Get-ChildItem -Path "out" -Recurse
@@ -137,7 +145,7 @@ jobs:
           - Built with: Electron Forge + Squirrel
           
           **Files:**
-          - `${{ steps.build_hash.outputs.filename }}`: Windows installer executable
+          - `${{ steps.build_hash.outputs.filename }}`: Windows installer executable (${{ steps.build_hash.outputs.size_mb }} MB)
           
           **Installation:**
           1. Download the `.exe` file
@@ -162,7 +170,8 @@ jobs:
           version = "${{ steps.package_version.outputs.version }}"
           md5 = "${{ steps.build_hash.outputs.md5 }}"
           filename = "${{ steps.build_hash.outputs.filename }}"
-          buildDate = "${{ steps.date.outputs.date }}"
+          size = [int64]"${{ steps.build_hash.outputs.size }}"
+          build_date = "${{ steps.date.outputs.date }}"
           commit = "${{ github.sha }}"
           platform = "windows"
         }

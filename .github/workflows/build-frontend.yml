@@ -3,8 +3,14 @@ name: Build and Release Frontend (All Platforms)
 on:
   push:
     branches: [ main ]
+    paths: 
+      - 'projects/frontend/**'
+      - '.github/workflows/build-frontend.yml'
   pull_request:
     branches: [ main ]
+    paths:
+      - 'projects/frontend/**'
+      - '.github/workflows/build-frontend.yml'
 
 jobs:
   build:
@@ -47,21 +53,23 @@ jobs:
           echo "No existing meta file found, creating new one"
         fi
         
-    - name: Setup Yarn
+    - name: Setup PNPM
       if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.version_check.outputs.version_changed == 'true'
-      run: npm install -g yarn
+      uses: pnpm/action-setup@v4
+      with:
+        version: latest
         
     - name: Install dependencies
       if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.version_check.outputs.version_changed == 'true'
       run: |
         cd projects/frontend
-        yarn install
+        pnpm install
         
     - name: Run build script
       if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.version_check.outputs.version_changed == 'true'
       run: |
         cd projects/frontend
-        node build.js
+        pnpm run distbuild
         
     - name: Upload build artifacts
       if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.version_check.outputs.version_changed == 'true'
@@ -72,6 +80,17 @@ jobs:
           projects/frontend/out/build.zip
           projects/frontend/out/build.md5.txt
         retention-days: 90
+        
+    - name: Get build MD5 and size
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.version_check.outputs.version_changed == 'true'
+      id: build_info
+      run: |
+        MD5=$(cat projects/frontend/out/build.md5.txt)
+        SIZE=$(stat -c%s projects/frontend/out/build.zip)
+        SIZE_MB=$(echo "scale=2; $SIZE / 1024 / 1024" | bc)
+        echo "md5=$MD5" >> $GITHUB_OUTPUT
+        echo "size=$SIZE" >> $GITHUB_OUTPUT
+        echo "size_mb=$SIZE_MB" >> $GITHUB_OUTPUT
         
     - name: Get current date
       if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.version_check.outputs.version_changed == 'true'
@@ -88,12 +107,14 @@ jobs:
           Automated build from commit ${{ github.sha }}
           
           **Build Info:**
+          - Version: ${{ steps.package_version.outputs.version }}
           - Commit: ${{ github.sha }}
           - Branch: ${{ github.ref_name }}
           - Date: ${{ steps.date.outputs.date }}
+          - Platform: All platforms
           
           **Files:**
-          - `build.zip`: Compressed build directory
+          - `build.zip`: Compressed build directory (${{ steps.build_info.outputs.size_mb }} MB)
           - `build.md5.txt`: MD5 checksum for verification
         files: |
           projects/frontend/out/build.zip
@@ -103,13 +124,6 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
-    - name: Get build MD5
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.version_check.outputs.version_changed == 'true'
-      id: build_md5
-      run: |
-        MD5=$(cat projects/frontend/out/build.md5.txt)
-        echo "md5=$MD5" >> $GITHUB_OUTPUT
-        
     - name: Update build meta JSON
       if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.version_check.outputs.version_changed == 'true'
       run: |
@@ -118,9 +132,11 @@ jobs:
         {
           "tag": "frontend-build-${{ steps.date.outputs.date }}",
           "version": "${{ steps.package_version.outputs.version }}",
-          "md5": "${{ steps.build_md5.outputs.md5 }}",
-          "buildDate": "${{ steps.date.outputs.date }}",
-          "commit": "${{ github.sha }}"
+          "md5": "${{ steps.build_info.outputs.md5 }}",
+          "size": ${{ steps.build_info.outputs.size }},
+          "build_date": "${{ steps.date.outputs.date }}",
+          "commit": "${{ github.sha }}",
+          "platform": "all"
         }
         EOF
         
