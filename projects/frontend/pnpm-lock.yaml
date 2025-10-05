@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@pulsoid/socket':
-        specifier: ^1.1.6
+        specifier: 1.1.6
         version: 1.1.6
       '@sveltejs/adapter-static':
         specifier: ^3.0.8
