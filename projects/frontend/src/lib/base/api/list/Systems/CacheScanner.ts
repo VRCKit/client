@@ -41,7 +41,7 @@ export class CacheScannerSystem {
       logsPath
     ], {
       ignoreInitial: true,
-      depth: 1
+      depth: 2
     });
     this.watcher.on("all", async (event, path) => {
       if (event !== "add" && event !== "change") return;
